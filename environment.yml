@@ -1,0 +1,9 @@
+name: nz_space_challenge
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - pandas
+  - geopandas
+  - jupyterlab
+prefix: /home/user/miniconda3
