@@ -3,7 +3,11 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - pandas
   - geopandas
   - jupyterlab
+  - pandas
+  - conda-forge/label/dev::rasterio
+  - scikit-image
+  - pip:
+    - quilt
 prefix: /home/user/miniconda3

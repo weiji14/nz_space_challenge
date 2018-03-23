@@ -1,0 +1,8 @@
+contents:
+  README:
+    file: README.md
+  train:
+    X_data:
+      file: train/X_data.npy
+    Y_data:
+      file: train/Y_data.npy

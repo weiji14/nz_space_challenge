@@ -5,7 +5,7 @@ Detecting crevasses in Antarctica for safer, more efficient navigation as an ana
 
 ## Quickstart
 
-Launch Binder
+Launch Binder, data will be loaded via [Quilt](https://github.com/quiltdata/quilt). Cheers to [data2binder](https://github.com/quiltdata/data2binder)!
 
 [![Binder](https://mybinder.org/badge.svg)](https://mybinder.org/v2/gh/weiji14/nz_space_challenge/master)
 
