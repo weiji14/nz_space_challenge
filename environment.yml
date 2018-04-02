@@ -5,9 +5,14 @@ channels:
 dependencies:
   - geopandas
   - jupyterlab
+  - keras>=2.1.5
+  - keras-gpu>=2.1.5
   - pandas
   - conda-forge/label/dev::rasterio
+  - scikit-learn
   - scikit-image
+  - tensorflow>=1.6.0
+  #- tensorflow-gpu>=1.6.0
   - pip:
     - quilt
 prefix: /home/user/miniconda3
