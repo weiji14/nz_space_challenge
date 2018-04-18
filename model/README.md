@@ -13,7 +13,15 @@ The data will be loaded via [Quilt](https://github.com/quiltdata/quilt), using i
 
 ## Description of dataset
 
-- X_data (image) - from the MODIS Mosaic of Antarctica 2003-2004 (MOA2004) Image Map, Version 1 [NSIDC-0280](https://nsidc.org/data/nsidc-0280)
-- Y_data (mask) - from the MOA-derived Structural Feature Map of the Ronne Ice Shelf, Version 1 [NSIDC-0497](https://nsidc.org/data/nsidc-0497)
+### Training data
+
+- X_data.npy (image) - from the MODIS Mosaic of Antarctica 2003-2004 (MOA2004) Image Map, Version 1 [NSIDC-0280](https://nsidc.org/data/nsidc-0280)
+- Y_data.npy (mask) - from the MOA-derived Structural Feature Map of the Ronne Ice Shelf, Version 1 [NSIDC-0497](https://nsidc.org/data/nsidc-0497)
+
+### Intermediate output data
+
+- W_hat_data.npy (predicted crevasse mask) - output from [crevasse finder](https://github.com/weiji14/nz_space_challenge/blob/master/crevasse_finder.ipynb)
+- crevasse_map.tif - a geotiff version of the above crevasse mask
 
 ![MODIS image and crevasse lines](https://user-images.githubusercontent.com/23487320/38399063-23bc975a-399c-11e8-8440-54cd412489dd.png)
+
