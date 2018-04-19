@@ -16,7 +16,6 @@ dependencies:
   #- tensorflow-gpu>=1.6.0
   - pip:
     - gym
-    - git+git://github.com/keras-rl/keras-rl.git@fac1e6157b7b375bedafb86ac778c6ee0e638f09  #commit on Apr 9
-    - git+git://github.com/keras-rl/keras-rl.git@fac1e6157b7b375bedafb86ac778c6ee0e638f09  #commit on 9 Apr 2018
+    - keras-rl
     - quilt
 prefix: /home/user/miniconda3
