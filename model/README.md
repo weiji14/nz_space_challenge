@@ -13,17 +13,17 @@ The data will be loaded via [Quilt](https://github.com/quiltdata/quilt), using i
 
 ## Description of dataset
 
-### Training data
+### Training data (for crevasse classifier)
 
 - X_data.npy (image) - from the MODIS Mosaic of Antarctica 2003-2004 (MOA2004) Image Map, Version 1 [NSIDC-0280](https://nsidc.org/data/nsidc-0280)
 - Y_data.npy (mask) - from the MOA-derived Structural Feature Map of the Ronne Ice Shelf, Version 1 [NSIDC-0497](https://nsidc.org/data/nsidc-0497)
 
 ![MODIS image and crevasse lines](https://user-images.githubusercontent.com/23487320/38399063-23bc975a-399c-11e8-8440-54cd412489dd.png)
 
-### Intermediate output data
+### Intermediate training data (for route navigator)
 
-- W_hat_data.npy (predicted crevasse mask) - seamless output of an entire area from [crevasse finder](https://github.com/weiji14/nz_space_challenge/blob/master/crevasse_finder.ipynb)
-- crevasse_map.tif - a geotiff version of the above crevasse mask
+- crevasse_map.tif (predicted mask) - seamless geotiff output of an entire area from [crevasse finder](https://github.com/weiji14/nz_space_challenge/blob/master/crevasse_finder.ipynb)
+- earthobservation_map.tif (image) - the cropped geotiff satellite earth observation image used as input to produce the crevasse_map.tif file above.
 
 ![Crevasse map of Ross Ice Shelf](https://user-images.githubusercontent.com/23487320/38966422-492b6432-43d6-11e8-9a9f-99e925124c89.png)
 

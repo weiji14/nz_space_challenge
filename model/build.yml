@@ -1,11 +1,11 @@
 contents:
   README:
     file: README.md
-  test:
-    W_hat_data:
-      file: test/W_hat_data.npy
+  intertrain:
     crevasse_map:
-      file: test/crevasse_map.tif
+      file: intertrain/crevasse_map.tif
+    earthobservation_map:
+      file: intertrain/earthobservation_map.tif
   train:
     X_data:
       file: train/X_data.npy
