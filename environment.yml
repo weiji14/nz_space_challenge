@@ -13,7 +13,7 @@ dependencies:
   - scikit-learn
   - scikit-image
   - tensorflow>=1.6.0
-  #- tensorflow-gpu>=1.6.0
+  - tensorflow-gpu>=1.6.0
   - pip:
     - gym
     - keras-rl
