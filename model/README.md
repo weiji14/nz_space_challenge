@@ -25,5 +25,5 @@ The data will be loaded via [Quilt](https://github.com/quiltdata/quilt), using i
 - crevasse_map.tif (predicted mask) - seamless geotiff output of an entire area from [crevasse finder](https://github.com/weiji14/nz_space_challenge/blob/master/crevasse_finder.ipynb)
 - earthobservation_map.tif (image) - the cropped geotiff satellite earth observation image used as input to produce the crevasse_map.tif file above.
 
-![Crevasse map of Ross Ice Shelf](https://user-images.githubusercontent.com/23487320/38966422-492b6432-43d6-11e8-9a9f-99e925124c89.png)
+![Crevasse map of Ross Ice Shelf](https://user-images.githubusercontent.com/23487320/39153891-9b7c3856-47a0-11e8-8fbe-0ba969045d50.png)
 
