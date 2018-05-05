@@ -1,0 +1,205 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge, chrome=1" />
+    <title>Experimental tfjs crevasse predictor</title>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+        }
+
+        #devTestingDemo {
+            height: 75%;
+            width: 100%;
+        }
+    </style>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.2.0/leaflet.css" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.2.0/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.10.3/dist/tf.min.js" crossorigin=""></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.4.4/proj4-src.js"></script>
+
+</head>
+
+<body>
+<p>
+This is an experimental tensorflowjs model that tries to predict crevasses from raw satellite images.
+Note that the model may crash on non-modern devices without a proper GPU. Also, this is just a proof of concept with bugs (albeit a cool one)!
+</p>
+<div id="devTestingDemo"></div>
+<canvas id="canvas" width=256 height=256></canvas>
+<canvas id="canvaspredict" width=256 height=256></canvas>
+
+<script>
+async function loadModel() {
+  console.log("Loading model");
+  const model = await tf.loadModel("tfjs/model.json");
+  console.log("Model loaded");
+  console.log(model);
+
+  console.log(model.predict(tf.zeros([1, 256, 256, 1])));
+  return tf.model({ inputs: model.inputs, outputs: model.outputs });
+  //return model;
+}
+
+async function init() {
+  crevasse_model = await loadModel();
+  console.log("Model really loaded!");
+  console.log(crevasse_model);
+}
+
+init();
+
+// Sentinel Hub WMS service
+// tiles generated using EPSG:3857 projection - Leaflet takes care of that
+let baseUrl = "https://services.sentinel-hub.com/ogc/wms/5b63030a-a576-4cf4-af58-b2f28ca6b987";
+let sentinelHub = L.tileLayer.wms(baseUrl, {
+    tileSize: 512,
+    attribution: '&copy; <a href="http://www.sentinel-hub.com/" target="_blank">Sentinel Hub</a>',
+    	 	maxcc:50,
+ 	 	 	 	minZoom:6,
+ 	 	 	 	maxZoom:16,
+ 	 	 	 	preset:"TRUE_COLOR",
+ 	 	 	 	gain:"0.3",
+ 	 	 	 	gamma:"0.8",
+ 	 	 	 	layers:"TRUE_COLOR",
+ 	 	 	 	time:"2018-02-10/2018-02-14",
+
+});
+
+let baseMaps = {
+    'Sentinel Hub WMS': sentinelHub
+};
+let overlayMaps = {
+    'Sentinel Hub WMS': sentinelHub
+}
+
+let map = L.map('devTestingDemo', {
+    center: [-78.09574636517269, 168.057861328125], // lat/lng in EPSG:4326
+    zoom: 8,
+    layers: [sentinelHub]
+});
+
+//L.control.layers(baseMaps, overlayMaps).addTo(map);
+L.control.layers(baseMaps, overlayMaps).addTo(map);
+
+var owsUrl = "https://services.sentinel-hub.com/ogc/wms/5b63030a-a576-4cf4-af58-b2f28ca6b987";
+var crsWGS84 = new proj4("EPSG:4326");
+var crsMapMerc = new proj4("EPSG:3857");
+
+const canvas = document.getElementById("canvas");
+const canvaspredict = document.getElementById("canvaspredict");
+const ctx = canvas.getContext("2d");
+const ctxpredict = canvaspredict.getContext("2d");
+
+map.on("moveend", main);
+
+function main() {
+	if (map.getZoom() >= 9) {    //if we are zoomed in close enough to the ground
+		get_wms_img();
+	} else {
+		console.log('Zoom in closer to predict!')
+	}
+};
+
+async function get_wms_img() {
+  var defaultParameters = {
+    service: "WMS",
+    request: "getMap",
+    layers: "TRUE_COLOR",
+    styles: "",
+    format: "image/jpeg",
+    transparent: 'false',
+    version: "1.1.1",
+    maxcc: 50,
+    preset: "TRUE_COLOR",
+    gain: "0.3",
+    gamma: "0.8",
+    time: "2018-02-10/2018-02-14",
+    width: 256,
+    height: 256,
+    srs: 'EPSG:3857',
+  };
+
+  var wgsBounds = map.getBounds(); //get width 512 by height 256 bounding Box in WGS84
+  var wgsNorthWest = wgsBounds.getNorthWest();
+  var wgsSouthEast = wgsBounds.getSouthEast();
+
+  var northwest = proj4(crsWGS84, crsMapMerc, [wgsNorthWest.lng, wgsNorthWest.lat]);
+  var southeast = proj4(crsWGS84, crsMapMerc, [wgsSouthEast.lng, wgsSouthEast.lat]);
+
+  var bounds = northwest.concat(southeast);
+
+  var customParams = {
+    //bbox: map.getBounds().toBBoxString()
+    bbox: bounds
+  };
+
+  var parameters = L.Util.extend(defaultParameters, customParams);
+  var imgUrl = owsUrl + L.Util.getParamString(parameters); //WMS GetMap url
+  console.log(imgUrl);
+
+  //https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Pixel_manipulation_with_canvas
+  var img = new Image();
+  img.crossOrigin = "Anonymous";
+  //img.src = "https://cors-anywhere.herokuapp.com/" + imgUrl; //the WMS GetMap url we are passing in
+  img.src = imgUrl;
+
+  img.onload = function getImageData() {
+    console.log("Image loaded");
+    ctx.drawImage(img, 0, 0);
+    img.style.display = "none";
+    const imageData = ctx.getImageData(0, 0, 256, 256);
+		//return imageData;
+    imageToTensor(imageData)
+  };
+
+  function imageToTensor(img) {
+    return tf.tidy(() => {
+      console.log("Converting ImageData to tf.tensor");
+      const wmsImage = tf.fromPixels(img, 0); // get just the red band from the RGBA data
+      const batchedImage = wmsImage.expandDims(0); //convert shape from (256,256,1) to (1,256,256,1)
+      const invertedImage = tf.sub(tf.scalar(255, "int32"), batchedImage); //change JS style 0-255 white-black to Python style 0-255 black-white...
+      const rescaledImage = invertedImage.toFloat().div(tf.scalar(255)); //convert 0-255 int data to 0-1 float type
+
+      //const y_inter = await tf.toPixels(wmsImage, canvasintermediate);
+      predictOnTensor(rescaledImage); //pass the tensor to the predictOnTensor function
+    });
+  };
+
+  //https://angularfirebase.com/lessons/tensorflow-js-quick-start/
+  function predictOnTensor(tensor) {
+    return tf.tidy(() => {
+      console.log("Starting predict on tensor");
+      const prediction = crevasse_model.predict(tensor, { batchSize: 1 });
+      //const imageTensor = tf.reshape(prediction, [256, 256]);
+      const imageTensor = tf.keep(tf.reshape(prediction, [256, 256]));
+      paintImgToCanvas(imageTensor);
+
+      //const reinvertedTensor = tf.keep(tf.sub(tf.scalar(1, "float32"), imageTensor)); //change Python style 0-1 black-white back to JS style 0-1 white-black
+      //paintImgToCanvas(reinvertedTensor);
+    });
+  };
+
+  async function paintImgToCanvas(imgTensor) {
+    //return tf.tidy(() => {
+    console.log("Painting back to canvas");
+    ctxpredict.clearRect(0, 0, 256, 256) //clear the canvas first
+    var y_hat = await tf.toPixels(imgTensor, canvaspredict); //paint prediction to canvas!!
+
+    console.log(y_hat);
+    //});
+  };
+
+};
+
+</script>
+</body>
+</html>
