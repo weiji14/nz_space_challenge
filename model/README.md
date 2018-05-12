@@ -15,10 +15,10 @@ The data will be loaded via [Quilt](https://github.com/quiltdata/quilt), using i
 
 ### Training data (for crevasse classifier)
 
-- X_data.npy (image) - from the MODIS Mosaic of Antarctica 2003-2004 (MOA2004) Image Map, Version 1 [NSIDC-0280](https://nsidc.org/data/nsidc-0280)
-- Y_data.npy (mask) - from the MOA-derived Structural Feature Map of the Ronne Ice Shelf, Version 1 [NSIDC-0497](https://nsidc.org/data/nsidc-0497)
+- X_data.npy (image) - Cropped image from Sentinel 2 data bands 4,3,2, True Color image retrieved from Sentinel Hub using gain=0.3 and gamma=0.8.
+- Y_data.npy (mask) - Manually digitized crevasse polygons using leaflet.draw webtool [here](https://weiji14.github.io/nz_space_challenge).
 
-![MODIS image and crevasse lines](https://user-images.githubusercontent.com/23487320/38399063-23bc975a-399c-11e8-8440-54cd412489dd.png)
+![Sentinel2 image and crevasse lines](https://user-images.githubusercontent.com/23487320/39954410-0f461808-5613-11e8-977e-1a1fd742d2a9.png)
 
 ### Intermediate training data (for route navigator)
 

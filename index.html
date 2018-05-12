@@ -1,10 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="x-ua-compatible" content="ie=edge, chrome=1" />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' />
     <title>Experimental tfjs crevasse predictor</title>
     <style>
         html,
@@ -14,26 +14,58 @@
             height: 100%;
             width: 100%;
         }
-
         #devTestingDemo {
-            height: 75%;
+            position: relative;
+            top: 0;
+            bottom: 0;
             width: 100%;
+            height: 75%;
+            z-index:1;
+        }
+        #delete, #export {
+            position: absolute;
+            top:50px;
+            right:10px;
+            z-index:100;
+            background:white;
+            color:black;
+            padding:6px;
+            border-radius:4px;
+            font-family: 'Helvetica Neue';
+            cursor: pointer;
+            font-size:12px;
+            text-decoration:none;
+        }
+        #export {
+            top:90px;
         }
     </style>
-
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.2.0/leaflet.css" />
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.2.0/leaflet.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.10.3/dist/tf.min.js" crossorigin=""></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.4.4/proj4-src.js"></script>
+    
+    <!--Add leaflet-->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.2.0/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.2.0/leaflet.js"></script>
+    
+    <!--Add leaflet.draw plugin-->
+    <link rel='stylesheet' href='https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.2/leaflet.draw.css' />
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.2/leaflet.draw.js'></script>
+    
+    <!--Add tensorflowjs-->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@0.10.3/dist/tf.min.js" crossorigin=""></script>
+    
+    <!--Add proj4js-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.4.4/proj4-src.js"></script>
+    
 
 </head>
 
 <body>
+<div id="devTestingDemo"></div>
+<div id='delete'>Delete Features</div>
+<a href='#' id='export'>Export Features</a>
 <p>
 This is an experimental tensorflowjs model that tries to predict crevasses from raw satellite images.
 Note that the model may crash on non-modern devices without a proper GPU. Also, this is just a proof of concept with bugs (albeit a cool one)!
 </p>
-<div id="devTestingDemo"></div>
 <canvas id="canvas" width=256 height=256></canvas>
 <canvas id="canvaspredict" width=256 height=256></canvas>
 
@@ -41,6 +73,7 @@ Note that the model may crash on non-modern devices without a proper GPU. Also, 
 async function loadModel() {
   console.log("Loading model");
   const model = await tf.loadModel("tfjs/model.json");
+  //const model = await tf.loadModel("https://raw.githubusercontent.com/weiji14/nz_space_challenge/master/tfjs/model.json")
   console.log("Model loaded");
   console.log(model);
 
@@ -55,7 +88,7 @@ async function init() {
   console.log(crevasse_model);
 }
 
-init();
+//init();
 
 // Sentinel Hub WMS service
 // tiles generated using EPSG:3857 projection - Leaflet takes care of that
@@ -77,9 +110,6 @@ let sentinelHub = L.tileLayer.wms(baseUrl, {
 let baseMaps = {
     'Sentinel Hub WMS': sentinelHub
 };
-let overlayMaps = {
-    'Sentinel Hub WMS': sentinelHub
-}
 
 let map = L.map('devTestingDemo', {
     center: [-78.09574636517269, 168.057861328125], // lat/lng in EPSG:4326
@@ -87,9 +117,59 @@ let map = L.map('devTestingDemo', {
     layers: [sentinelHub]
 });
 
-//L.control.layers(baseMaps, overlayMaps).addTo(map);
-L.control.layers(baseMaps, overlayMaps).addTo(map);
+L.control.layers(baseMaps).addTo(map);
 
+/****
+  Leaflet draw stuff, the feature group we'll add features to and drawing controls
+  Based on https://bl.ocks.org/danswick/d30c44b081be31aea483
+****/
+var featureGroup = L.featureGroup().addTo(map);
+
+var drawControl = new L.Control.Draw({
+    draw: {
+        circle: false,
+        rectangle: false,
+        marker: false,
+        circlemarker: false,
+        polygon: {
+            allowIntersection: false,
+            showArea: true
+        }
+    },
+    edit: {
+        featureGroup: featureGroup,
+        poly: {
+            allowIntersection: false
+        }
+    }
+}).addTo(map);
+
+map.on('draw:created', function(e) {
+    // Each time a feaute is created, it's added to the over arching feature group
+    featureGroup.addLayer(e.layer);
+});
+
+// on click, clear all layers
+document.getElementById('delete').onclick = function(e) {
+    featureGroup.clearLayers();
+};
+
+document.getElementById('export').onclick = function(e) {
+    // Extract GeoJson from featureGroup
+    var data = featureGroup.toGeoJSON();
+
+    // Stringify the GeoJson
+    var convertedData = 'text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(data));
+    
+    // Create export
+    document.getElementById('export').setAttribute('href', 'data:' + convertedData);
+    document.getElementById('export').setAttribute('download','crevasses.geojson');
+};
+
+
+/****
+  WMS GetMap stuff, getting an image to pass into tensorflowjs model
+****/
 var owsUrl = "https://services.sentinel-hub.com/ogc/wms/5b63030a-a576-4cf4-af58-b2f28ca6b987";
 var crsWGS84 = new proj4("EPSG:4326");
 var crsMapMerc = new proj4("EPSG:3857");
@@ -99,7 +179,7 @@ const canvaspredict = document.getElementById("canvaspredict");
 const ctx = canvas.getContext("2d");
 const ctxpredict = canvaspredict.getContext("2d");
 
-map.on("moveend", main);
+//map.on("moveend", main);
 
 function main() {
 	if (map.getZoom() >= 9) {    //if we are zoomed in close enough to the ground

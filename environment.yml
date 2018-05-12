@@ -7,6 +7,7 @@ dependencies:
   - jupyterlab
   - keras>=2.1.5
   - keras-gpu>=2.1.5
+  - owslib
   - pandas
   - python>=3.6
   - conda-forge/label/dev::rasterio
