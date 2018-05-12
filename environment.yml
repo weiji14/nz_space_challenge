@@ -19,4 +19,5 @@ dependencies:
     - gym
     - keras-rl
     - quilt
+    - tensorflowjs
 prefix: /home/user/miniconda3

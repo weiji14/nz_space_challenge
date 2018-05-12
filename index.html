@@ -77,7 +77,7 @@ async function loadModel() {
   console.log("Model loaded");
   console.log(model);
 
-  console.log(model.predict(tf.zeros([1, 256, 256, 1])));
+  console.log(model.predict(tf.zeros([1, 256, 256, 3])));
   return tf.model({ inputs: model.inputs, outputs: model.outputs });
   //return model;
 }
@@ -88,7 +88,7 @@ async function init() {
   console.log(crevasse_model);
 }
 
-//init();
+init();
 
 // Sentinel Hub WMS service
 // tiles generated using EPSG:3857 projection - Leaflet takes care of that
@@ -179,7 +179,7 @@ const canvaspredict = document.getElementById("canvaspredict");
 const ctx = canvas.getContext("2d");
 const ctxpredict = canvaspredict.getContext("2d");
 
-//map.on("moveend", main);
+map.on("moveend", main);
 
 function main() {
 	if (map.getZoom() >= 9) {    //if we are zoomed in close enough to the ground
@@ -225,13 +225,13 @@ async function get_wms_img() {
   var parameters = L.Util.extend(defaultParameters, customParams);
   var imgUrl = owsUrl + L.Util.getParamString(parameters); //WMS GetMap url
   console.log(imgUrl);
-
+  
   //https://developer.mozilla.org/en-US/docs/Web/API/Canvas_API/Tutorial/Pixel_manipulation_with_canvas
   var img = new Image();
   img.crossOrigin = "Anonymous";
   //img.src = "https://cors-anywhere.herokuapp.com/" + imgUrl; //the WMS GetMap url we are passing in
   img.src = imgUrl;
-
+  
   img.onload = function getImageData() {
     console.log("Image loaded");
     ctx.drawImage(img, 0, 0);
@@ -244,8 +244,8 @@ async function get_wms_img() {
   function imageToTensor(img) {
     return tf.tidy(() => {
       console.log("Converting ImageData to tf.tensor");
-      const wmsImage = tf.fromPixels(img, 0); // get just the red band from the RGBA data
-      const batchedImage = wmsImage.expandDims(0); //convert shape from (256,256,1) to (1,256,256,1)
+      const wmsImage = tf.fromPixels(img, 3); // get just the RGB bands from the RGBA data
+      const batchedImage = wmsImage.expandDims(0); //convert shape from (256,256,3) to (1,256,256,3)
       const invertedImage = tf.sub(tf.scalar(255, "int32"), batchedImage); //change JS style 0-255 white-black to Python style 0-255 black-white...
       const rescaledImage = invertedImage.toFloat().div(tf.scalar(255)); //convert 0-255 int data to 0-1 float type
 
@@ -277,7 +277,7 @@ async function get_wms_img() {
     console.log(y_hat);
     //});
   };
-
+  
 };
 
 </script>
