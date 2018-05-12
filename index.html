@@ -22,9 +22,9 @@
             height: 75%;
             z-index:1;
         }
-        #delete, #export {
+        #delete, #export, #fileInputButton {
             position: absolute;
-            top:50px;
+            top:60px;
             right:10px;
             z-index:100;
             background:white;
@@ -36,8 +36,11 @@
             font-size:12px;
             text-decoration:none;
         }
-        #export {
+        #delete {
             top:90px;
+        }
+        #export {
+            top:120px;
         }
     </style>
     
@@ -60,8 +63,10 @@
 
 <body>
 <div id="devTestingDemo"></div>
+<div id='fileInputButton'>Upload GeoJSON</div>
+<input id="fileInput" type="file" style="display:none"/>
 <div id='delete'>Delete Features</div>
-<a href='#' id='export'>Export Features</a>
+<a href='#' id='export'>Export GeoJSON</a>
 <p>
 This is an experimental tensorflowjs model that tries to predict crevasses from raw satellite images.
 Note that the model may crash on non-modern devices without a proper GPU. Also, this is just a proof of concept with bugs (albeit a cool one)!
@@ -125,6 +130,23 @@ L.control.layers(baseMaps).addTo(map);
 ****/
 var featureGroup = L.featureGroup().addTo(map);
 
+document.getElementById('fileInput').addEventListener("change", function (evt) {
+  var file = evt.target.files[0], // Read first file for this example.
+      reader = new FileReader();
+
+  reader.onload = function (e) {
+    var fileText = e.target.result;
+        fileData = JSON.parse(fileText);
+        var loadedGroup = L.geoJson(fileData, {
+          onEachFeature: function (feature, layer) {
+            featureGroup.addLayer(layer);
+          }
+        });
+    map.fitBounds(loadedGroup.getBounds());
+  }
+  reader.readAsText(file);
+});
+
 var drawControl = new L.Control.Draw({
     draw: {
         circle: false,
@@ -149,9 +171,14 @@ map.on('draw:created', function(e) {
     featureGroup.addLayer(e.layer);
 });
 
-// on click, clear all layers
+document.getElementById('fileInputButton').onclick = function(e) {
+  // on click, popup upload file dialog
+  document.getElementById('fileInput').click();
+};
+
 document.getElementById('delete').onclick = function(e) {
-    featureGroup.clearLayers();
+  // on click, clear all layers
+  featureGroup.clearLayers();
 };
 
 document.getElementById('export').onclick = function(e) {
