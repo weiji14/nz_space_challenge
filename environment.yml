@@ -9,7 +9,9 @@ dependencies:
   - keras-gpu>=2.1.5
   - owslib
   - pandas
+  - pydotplus
   - python>=3.6
+  - python-graphviz
   - conda-forge/label/dev::rasterio
   - scikit-learn
   - scikit-image
