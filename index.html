@@ -24,7 +24,7 @@
         }
         #delete, #export, #fileInputButton {
             position: absolute;
-            top:60px;
+            top:80px;
             right:10px;
             z-index:100;
             background:white;
@@ -37,10 +37,10 @@
             text-decoration:none;
         }
         #delete {
-            top:90px;
+            top:110px;
         }
         #export {
-            top:120px;
+            top:140px;
         }
     </style>
     
@@ -68,8 +68,10 @@
 <div id='delete'>Delete Features</div>
 <a href='#' id='export'>Export GeoJSON</a>
 <p>
-This is an experimental tensorflowjs model that tries to predict crevasses from raw satellite images.
-Note that the model may crash on non-modern devices without a proper GPU. Also, this is just a proof of concept with bugs (albeit a cool one)!
+This is a demo map using Sentinel 1 and 2 data where you can draw crevasse polygons and contribute to Antarctic science!
+Digging into the html/javascript will reveal an experimental tensorflowjs model that tries to predict crevasses from raw satellite images.
+Note that the model may crash on non-modern devices without WebGL and/or a proper GPU.
+Also, this is just a proof of concept with bugs (albeit a cool one)!
 </p>
 <canvas id="canvas" width=256 height=256></canvas>
 <canvas id="canvaspredict" width=256 height=256></canvas>
@@ -93,36 +95,53 @@ async function init() {
   console.log(crevasse_model);
 }
 
-init();
+//init();
 
 // Sentinel Hub WMS service
 // tiles generated using EPSG:3857 projection - Leaflet takes care of that
 let baseUrl = "https://services.sentinel-hub.com/ogc/wms/5b63030a-a576-4cf4-af58-b2f28ca6b987";
-let sentinelHub = L.tileLayer.wms(baseUrl, {
+let sentinel2 = L.tileLayer.wms(baseUrl, {
     tileSize: 512,
     attribution: '&copy; <a href="http://www.sentinel-hub.com/" target="_blank">Sentinel Hub</a>',
-    	 	maxcc:50,
- 	 	 	 	minZoom:6,
- 	 	 	 	maxZoom:16,
- 	 	 	 	preset:"TRUE_COLOR",
- 	 	 	 	gain:"0.3",
- 	 	 	 	gamma:"0.8",
- 	 	 	 	layers:"TRUE_COLOR",
- 	 	 	 	time:"2018-02-10/2018-02-14",
-
+    maxcc:20,
+    minZoom:5,
+    maxZoom:16,
+    preset:"TRUE_COLOR",
+    gain:"0.3",
+    gamma:"0.8",
+ 	layers:"TRUE_COLOR",
+ 	time:"2018-02-10/2018-02-14",
+    format: 'image/png',
 });
 
+let sentinel1 = L.tileLayer.wms(baseUrl, {
+    tileSize: 512,
+    attribution: '&copy; <a href="http://www.sentinel-hub.com/" target="_blank">Sentinel Hub</a>',
+    maxcc:20, 
+ 	minZoom:5, 
+ 	maxZoom:16, 
+ 	preset:"SENTINEL-1-EW-RGB-RATIO", 
+ 	layers:"SENTINEL-1-EW-RGB-RATIO", 
+ 	time:"2018-02-01/2018-02-28",
+    transparent: true,
+    format: 'image/png',
+}); 
+
 let baseMaps = {
-    'Sentinel Hub WMS': sentinelHub
+    'Sentinel 2 L2C': sentinel2
 };
+
+let overlayMaps = {
+    'Sentinel 1 EW': sentinel1
+}
 
 let map = L.map('devTestingDemo', {
     center: [-78.09574636517269, 168.057861328125], // lat/lng in EPSG:4326
     zoom: 8,
-    layers: [sentinelHub]
+    layers: [sentinel2]
 });
 
-L.control.layers(baseMaps).addTo(map);
+L.control.layers(baseMaps, overlayMaps).addTo(map);
 
 /****
   Leaflet draw stuff, the feature group we'll add features to and drawing controls
@@ -153,6 +172,7 @@ var drawControl = new L.Control.Draw({
         rectangle: false,
         marker: false,
         circlemarker: false,
+        polyline: false,
         polygon: {
             allowIntersection: false,
             showArea: true
@@ -206,7 +226,7 @@ const canvaspredict = document.getElementById("canvaspredict");
 const ctx = canvas.getContext("2d");
 const ctxpredict = canvaspredict.getContext("2d");
 
-map.on("moveend", main);
+//map.on("moveend", main);
 
 function main() {
 	if (map.getZoom() >= 9) {    //if we are zoomed in close enough to the ground
