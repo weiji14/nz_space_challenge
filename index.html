@@ -19,12 +19,12 @@
             top: 0;
             bottom: 0;
             width: 100%;
-            height: 75%;
+            height: 90%;
             z-index:1;
         }
         #delete, #export, #fileInputButton {
             position: absolute;
-            top:80px;
+            top:135px;
             right:10px;
             z-index:100;
             background:white;
@@ -37,10 +37,10 @@
             text-decoration:none;
         }
         #delete {
-            top:110px;
+            top:165px;
         }
         #export {
-            top:140px;
+            top:195px;
         }
     </style>
     
@@ -95,7 +95,7 @@ async function init() {
   console.log(crevasse_model);
 }
 
-//init();
+init();
 
 // Sentinel Hub WMS service
 // tiles generated using EPSG:3857 projection - Leaflet takes care of that
@@ -127,21 +127,24 @@ let sentinel1 = L.tileLayer.wms(baseUrl, {
     format: 'image/png',
 }); 
 
+let predictGroup = L.layerGroup()  //we'll put our predicted images into this layer group
+
 let baseMaps = {
     'Sentinel 2 L2C': sentinel2
 };
 
 let overlayMaps = {
-    'Sentinel 1 EW': sentinel1
+    'Sentinel 1 EW': sentinel1,
+    'Crevasse predictions': predictGroup
 }
 
 let map = L.map('devTestingDemo', {
     center: [-78.09574636517269, 168.057861328125], // lat/lng in EPSG:4326
     zoom: 8,
-    layers: [sentinel2]
+    layers: [sentinel2, predictGroup]
 });
 
-L.control.layers(baseMaps, overlayMaps).addTo(map);
+var layerController = L.control.layers(baseMaps, overlayMaps, {position: 'topleft'}).addTo(map);
 
 /****
   Leaflet draw stuff, the feature group we'll add features to and drawing controls
@@ -167,6 +170,7 @@ document.getElementById('fileInput').addEventListener("change", function (evt) {
 });
 
 var drawControl = new L.Control.Draw({
+    position: 'topright',
     draw: {
         circle: false,
         rectangle: false,
@@ -226,10 +230,10 @@ const canvaspredict = document.getElementById("canvaspredict");
 const ctx = canvas.getContext("2d");
 const ctxpredict = canvaspredict.getContext("2d");
 
-//map.on("moveend", main);
+map.on("moveend", main);
 
 function main() {
-	if (map.getZoom() >= 9) {    //if we are zoomed in close enough to the ground
+	if (map.getZoom() >= 11) {    //if we are zoomed in close enough to the ground
 		get_wms_img();
 	} else {
 		console.log('Zoom in closer to predict!')
@@ -322,6 +326,10 @@ async function get_wms_img() {
     var y_hat = await tf.toPixels(imgTensor, canvaspredict); //paint prediction to canvas!!
 
     console.log(y_hat);
+    
+    var dataURL = canvaspredict.toDataURL();
+    var predictionOverlay = L.imageOverlay(dataURL, wgsBounds);
+    predictGroup.addLayer(predictionOverlay);  //add the prediction map to the predictGroup    
     //});
   };
   
